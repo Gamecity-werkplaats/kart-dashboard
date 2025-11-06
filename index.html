@@ -2,12 +2,14 @@
 <html lang="nl">
 <head>
 <meta charset="UTF-8" />
+  
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
+  
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Kart Problemen Dashboard v2</title>
-<link rel="manifest" href="manifest.json?v=20251107-1">
+<title>Kart Problemen Dashboard v1.1 (groeperen + hiërarchie)</title>
+<link rel="manifest" href="manifest.json?v=20251106-3">
 <meta name="theme-color" content="#00c896">
 
 <style>
@@ -80,18 +82,16 @@ button:hover{opacity:.95;}
 .groupControls { margin-left:auto; display:flex; gap:8px; align-items:center; }
 
 /* Groups */
-.group { margin-bottom:14px; }
+.group {
+  margin-bottom:14px;
+}
 .groupHeader {
   display:flex; align-items:center; justify-content:space-between;
   background: rgba(255,255,255,0.02); padding:10px 12px; border-radius:8px;
   border:1px solid rgba(255,255,255,0.03); font-weight:700;
 }
-.groupHeaderInner { display:flex; gap:12px; align-items:center }
 .groupHeader .meta { color:#bbb; font-weight:600; font-size:0.95rem }
 .groupContent { display:grid; grid-template-columns:repeat(auto-fill,minmax(250px,1fr)); gap:14px; margin-top:10px; }
-.group.collapsed .groupContent { display:none }
-.toggleBtn { background:transparent; border:none; color:#ccc; font-weight:700; cursor:pointer; transform-origin:center; transition:transform .18s ease; }
-.group.collapsed .toggleBtn { transform: rotate(-90deg); }
 
 /* Cards — improved visual hierarchy */
 .card {
@@ -107,21 +107,14 @@ button:hover{opacity:.95;}
 .card .problem { margin-top:8px; font-size:1.03rem; color:var(--fg); line-height:1.25 }
 .card .meta { margin-top:10px; color:#9aa0a6; font-size:0.85rem }
 .card .status{font-weight:700;color:var(--accent); margin-top:8px}
-.solveBtn {background:var(--solved);margin-top:8px;padding:8px;border-radius:8px;display:inline-flex;align-items:center;gap:8px}
+.solveBtn {background:var(--solved);margin-top:8px;padding:8px;border-radius:8px}
 .solveBtn:disabled{background:#444;cursor:not-allowed;}
-.solveBtn .spinner{ width:16px; height:16px; border-radius:50%; border:2px solid rgba(255,255,255,0.25); border-top-color:rgba(255,255,255,0.9); animation:spin .8s linear infinite; }
-@keyframes spin{to{transform:rotate(360deg)}}
-.solveBtn.saving{ opacity:.9; transform:scale(.995); }
-.solveBtn.success{ background: linear-gradient(90deg,#2ecc71,#27ae60); box-shadow:0 8px 24px rgba(39,174,96,0.18); }
 
 /* Drag handle */
 .dragHandle { cursor:grab; font-size:12px; color:#ccc; background:transparent; border:none }
 .card.dragging { opacity:0.5 }
 
-/* Toast */
-.toast { position:fixed; right:20px; bottom:20px; background:#222; color:#fff; padding:12px 16px; border-radius:10px; box-shadow:0 8px 24px rgba(0,0,0,0.6); z-index:200000 }
-
-/* PIN overlay CSS */
+/* PIN overlay CSS (unchanged visual) */
 #pinOverlay { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.94); z-index: 99999; }
 #pinOverlay[hidden] { display:none !important; }
 #pinCard { background: #0b0c0d; color: #f8fafc; border-radius: 12px; padding: 22px; width: 380px; max-width: 94%; box-shadow: 0 22px 60px rgba(0,0,0,0.75); text-align: center; border: 1px solid rgba(255,255,255,0.04); font-family: inherit; }
@@ -139,7 +132,7 @@ button:hover{opacity:.95;}
 </head>
 <body>
 <header>
-  <h1>🏎️ Kart Problemen Dashboard V2</h1>
+  <h1>🏎️ Kart Problemen Dashboard V1.1</h1>
   <button id="modeToggle">☀️</button>
 </header>
 
@@ -186,36 +179,18 @@ button:hover{opacity:.95;}
   <div id="cardsContainer"></div>
 </main>
 
-<!-- simple toast placeholder -->
-<div id="toastRoot" aria-live="polite" style="position:fixed;right:18px;bottom:18px;z-index:200000"></div>
-
 <script>
-/*
-  VOOR JE START:
-  - Vervang SHEET_URL door de URL van je gedeployde Google Apps Script webapp (exec-url).
-  - De server (Apps Script) moet de GET returning { rows: [...], orders: {...} } ondersteunen
-    en de POST actons 'add', 'solve' en 'reorder' (voorbeeld in mijn eerdere reactie).
-*/
 const SHEET_URL = "https://script.google.com/macros/s/AKfycbyV2YCK6qVc60A-ktS33beE5T7wupJXadiyn_hHPtsXIrP5tq5aIIjHCacLq_LE8yryig/exec";
 
-// fill kart selects
 for(let i=1;i<=40;i++){
   document.querySelector("#kart").innerHTML+=`<option>${i}</option>`;
   document.querySelector("#filterKart").innerHTML+=`<option>${i}</option>`;
 }
 
-let all = [];
-let serverOrders = {}; // wordt gevuld door load()
-const syncStatus = document.getElementById("syncStatus");
+let all=[];
+let serverOrders = {}; // filled from server (used when no local order)
+const syncStatus=document.getElementById("syncStatus");
 
-/* small UX helpers */
-function showToast(msg, timeout=2500){
-  const root=document.getElementById('toastRoot');
-  const t=document.createElement('div'); t.className='toast'; t.textContent=msg; root.appendChild(t);
-  setTimeout(()=>{ t.style.opacity='0'; t.addEventListener('transitionend',()=>t.remove()); }, timeout);
-}
-
-/* date formatting */
 function formatIsoToDDMMYYYY_HHMM(iso) {
   if (!iso) return '';
   const date = new Date(iso);
@@ -230,7 +205,9 @@ function formatIsoToDDMMYYYY_HHMM(iso) {
   if (!map.day || !map.month || !map.year) return iso;
   return `${map.day}-${map.month}-${map.year} ${map.hour}:${map.minute}`;
 }
+
 function extractDateKey(iso) {
+  // returns DD-MM-YYYY or original iso if not parseable
   const pretty = formatIsoToDDMMYYYY_HHMM(iso);
   const m = pretty.match(/^(\d{2}-\d{2}-\d{4})/);
   return m ? m[1] : pretty;
@@ -240,19 +217,6 @@ function extractDateKey(iso) {
 function storageKeyForGroup(groupKey){ return 'kart-order:' + (groupKey||'__all__'); }
 function saveOrderForGroup(groupKey, ids){ localStorage.setItem(storageKeyForGroup(groupKey), JSON.stringify(ids)); }
 function loadOrderForGroup(groupKey){ try{ return JSON.parse(localStorage.getItem(storageKeyForGroup(groupKey))||'[]'); }catch(e){return [];} }
-
-/* Sync order to server (POST JSON) */
-async function syncOrderToServer(groupKey, ids){
-  try{
-    const body = { action: 'reorder', groupKey, order: ids };
-    const r = await fetch(SHEET_URL, { method: 'POST', headers: { 'Content-Type':'application/json' }, body: JSON.stringify(body) });
-    if(!r.ok) throw new Error('Server gaf fout: ' + r.status);
-    showToast('Volgorde opgeslagen');
-  }catch(err){
-    console.warn('Kon volgorde niet syncen',err);
-    showToast('Kon volgorde niet opslaan (offline)');
-  }
-}
 
 /* -----------------------
    Render + grouping
@@ -289,6 +253,7 @@ function renderCards(){
     // sort groups by date desc or by status name
     const keys = Object.keys(groups).sort((a,b)=>{
       if(groupBy==='date'){
+        // parse date dd-mm-yyyy
         const pa=a.split('-').reverse().join('-');
         const pb=b.split('-').reverse().join('-');
         return pb.localeCompare(pa);
@@ -299,24 +264,12 @@ function renderCards(){
     keys.forEach(key=>{
       const wrapper = document.createElement('div'); wrapper.className='group';
       const header = document.createElement('div'); header.className='groupHeader';
-      header.innerHTML = `<div class="groupHeaderInner"><div class="title">${key}</div><div class="meta">${groups[key].length} items</div></div><div><button class="toggleBtn" aria-label="Inklappen">▾</button></div>`;
+      header.innerHTML = `<div>${key}</div><div class="meta">${groups[key].length} items</div>`;
       wrapper.appendChild(header);
       const content = document.createElement('div'); content.className='groupContent';
       wrapper.appendChild(content);
       container.appendChild(wrapper);
       appendCardsToContainer(groups[key], content, key);
-
-      // if stored collapsed state in localStorage, apply it
-      const collapsed = localStorage.getItem('kart-collapsed:' + key);
-      if(collapsed === '1') wrapper.classList.add('collapsed');
-
-      // toggle handler
-      const tb = header.querySelector('.toggleBtn');
-      tb.addEventListener('click', ()=>{
-        wrapper.classList.toggle('collapsed');
-        const is = wrapper.classList.contains('collapsed');
-        localStorage.setItem('kart-collapsed:' + key, is ? '1' : '0');
-      });
     });
   }
   enableDragAndDrop();
@@ -343,38 +296,26 @@ function makeCardElement(p){
   return div;
 }
 
-/*
-  appendCardsToContainer:
-  - first checks localStorage order (per-group)
-  - else uses serverOrders[groupKey] (if present)
-  - otherwise keeps default order
-*/
 function appendCardsToContainer(items, contentEl, groupKey){
   // Build elements
   const elems = items.map(makeCardElement);
   contentEl.innerHTML = '';
   elems.forEach(e=>contentEl.appendChild(e));
 
-  // apply saved order (local first, else server)
-  const localSaved = loadOrderForGroup(groupKey);
-  let applyOrder = [];
-  if (localSaved && localSaved.length) {
-    applyOrder = localSaved;
-  } else if (serverOrders && serverOrders[groupKey] && serverOrders[groupKey].length) {
-    applyOrder = serverOrders[groupKey];
-  }
-
-  if (applyOrder && applyOrder.length){
+  // apply saved order (if any)
+  const saved = loadOrderForGroup(groupKey);
+  if(saved && saved.length){
+    // reorder DOM according to saved array
     const map = new Map();
     contentEl.querySelectorAll('.card').forEach(c=>map.set(c.dataset.id,c));
-    applyOrder.forEach(id => { if(map.has(id)) contentEl.appendChild(map.get(id)); });
+    saved.forEach(id=>{ if(map.has(id)) contentEl.appendChild(map.get(id)); });
     // append any not in saved (new items)
-    contentEl.querySelectorAll('.card').forEach(c => { if(!applyOrder.includes(c.dataset.id)) contentEl.appendChild(c); });
+    contentEl.querySelectorAll('.card').forEach(c=>{ if(!saved.includes(c.dataset.id)) contentEl.appendChild(c); });
   }
 }
 
 /* -----------------------
-   Drag & drop — updates localStorage order for the group container (and syncs to server)
+   Drag & drop (simple HTML5) — updates localStorage order for the group container
    ----------------------- */
 function enableDragAndDrop(){
   document.querySelectorAll('.groupContent').forEach(container=>{
@@ -415,115 +356,86 @@ function getDragAfterElement(container, y){
   }, { offset: Number.NEGATIVE_INFINITY }).element || null;
 }
 
-async function saveOrderForThisContainer(container){
+function saveOrderForThisContainer(container){
+  // determine group key by walking DOM: the parent .group element's header text
   const groupEl = container.closest('.group');
   let key = '__nogroup__';
   if(groupEl){
     const header = groupEl.querySelector('.groupHeader');
-    if(header) key = header.querySelector('.title') ? header.querySelector('.title').textContent.trim() : key;
+    if(header) key = header.firstElementChild ? header.firstElementChild.textContent.trim() : key;
   }
   const ids = [...container.querySelectorAll('.card')].map(c=>c.dataset.id);
   saveOrderForGroup(key, ids);
-  await syncOrderToServer(key, ids);
 }
 
 /* -----------------------
    Data load + actions
-   - GET returns { rows: [...], orders: {...} }
    ----------------------- */
 async function load(){
-  syncStatus.textContent="🔄 Data verversen...";
-  try{
-    const r = await fetch(SHEET_URL + "?t=" + Date.now());
-    const d = await r.json();
-    const rows = Array.isArray(d.rows) ? d.rows : (d.data || []);
-    serverOrders = d.orders || {};
-    all = rows.slice(1).map(r => ({
-      datum: r[0],
-      kart: r[1],
-      probleem: r[2],
-      melder: r[3],
-      status: r[4] || "open"
-    }));
-    renderDashboard();
-    renderCards();
-    syncStatus.textContent = "✅ Gesynchroniseerd (" + new Date().toLocaleTimeString("nl-NL") + ")";
-  }catch(err){
-    console.error(err);
-    syncStatus.textContent="⚠️ Kon niet verbinden (offline?)";
-    showToast('Offline: gebruik lokale data');
-  }
-}
+  syncStatus.textContent = "🔄 Data verversen...";
+  // JSONP callback to avoid CORS on GET
+  const cbName = '__gs_cb_' + Date.now();
+  window[cbName] = function(d){
+    try {
+      const rows = Array.isArray(d.rows) ? d.rows : [];
+      serverOrders = d.orders || {};
+      all = rows.slice(1).map(r => ({ datum: r[0], kart: r[1], probleem: r[2], melder: r[3], status: r[4] || "open" }));
+      renderDashboard();
+      renderCards();
+      syncStatus.textContent = "✅ Gesynchroniseerd (" + new Date().toLocaleTimeString("nl-NL") + ")";
+    } finally {
+      try{ delete window[cbName]; }catch(e){}
+      try{ script.remove(); }catch(e){}
+    }
+  };
+  const script = document.createElement('script');
+  script.src = SHEET_URL + '?callback=' + cbName + '&t=' + Date.now();
+  script.onerror = function(){
+    syncStatus.textContent = "⚠️ Kon niet verbinden (offline?)";
+    showToast('Kon data niet laden');
+    try{ delete window[cbName]; }catch(e){}
+    try{ script.remove(); }catch(e){}
+  };
+  document.head.appendChild(script);
+} 
 
-/* Form submit — POST JSON */
+// Form submit
 document.getElementById("addForm").addEventListener("submit",async e=>{
   e.preventDefault();
   const body={ action:"add", datum: new Date().toISOString(), kart:document.getElementById("kart").value, probleem:document.getElementById("probleem").value, melder:document.getElementById("melder").value, status:"open" };
-  try{
-    const resp = await fetch(SHEET_URL,{method:"POST",headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
-    if(!resp.ok) throw new Error('server error');
-    e.target.reset();
-    await load();
-    showToast('Melding toegevoegd');
-  }catch(err){
-    console.error(err);
-    showToast('Kon melding niet toevoegen (offline)');
-  }
+  await fetch(SHEET_URL, { method: 'POST', body: new URLSearchParams({ payload: JSON.stringify(body) }) });
+  e.target.reset(); load();
 });
 
-/* Delegated solve click with visual feedback */
+// Delegated solve click
 document.addEventListener('click', async (ev)=>{
   const btn = ev.target.closest('.solveBtn');
   if(!btn) return;
-  // visual feedback: spinner + disabled
-  btn.disabled = true; btn.classList.add('saving');
-  const prevHTML = btn.innerHTML;
-  btn.innerHTML = `<span class="spinner"></span><span>Opslaan...</span>`;
-
   const kart = btn.dataset.kart; const probleem = btn.dataset.probleem;
-  try{
-    const resp = await fetch(SHEET_URL,{method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({action:'solve', kart, probleem})});
-    if(!resp.ok) throw new Error('server error');
-
-    // success — update card UI
-    const card = btn.closest('.card');
-    if(card){
-      card.classList.remove('open'); card.classList.add('opgelost');
-      const statusEl = card.querySelector('.status'); if(statusEl) statusEl.textContent = 'opgelost';
-      btn.classList.remove('saving'); btn.classList.add('success');
-      btn.innerHTML = '✅ Opgelost';
-      btn.disabled = true;
-    }
-    showToast('Melding gemarkeerd als opgelost');
-    renderDashboard();
-  }catch(err){
-    console.error(err);
-    btn.classList.remove('saving');
-    btn.disabled = false; btn.innerHTML = prevHTML;
-    showToast('Kon melding niet markeren (offline)');
-  }
+  await fetch(SHEET_URL, { method: 'POST', body: new URLSearchParams({ payload: JSON.stringify({ action: 'solve', kart, probleem }) }) });
+  load();
 });
 
-/* Filters */
+// Filters
 document.getElementById("filterKart").addEventListener("change",renderCards);
 document.getElementById("filterStatus").addEventListener("change",renderCards);
 document.getElementById("groupBy").addEventListener("change",renderCards);
 document.getElementById("clearFilters").addEventListener("click",()=>{document.getElementById("filterKart").value="";document.getElementById("filterStatus").value="";renderCards();});
 
-/* Auto refresh every 60s */
+// Auto refresh every 60s
 setInterval(load,60000);
 
-/* Dark/light mode */
+// Dark/light mode
 const body=document.body, toggle=document.getElementById("modeToggle");
 toggle.addEventListener("click",()=>{body.classList.toggle("light");toggle.textContent=body.classList.contains("light")?"🌙":"☀️";});
 
-/* Service worker reg (kept) */
+// Service worker reg (kept)
 if('serviceWorker' in navigator){ navigator.serviceWorker.register('service-worker.js?v=20251106-1').then(()=>console.log("Service Worker ready")).catch(console.error); }
 
 load();
 </script>
 
-<!-- PIN overlay -->
+<!-- PIN overlay HTML & scripts kept as-is (no changes to behaviour) -->
 <div id="pinOverlay" aria-hidden="false">
   <div id="pinCard" role="dialog" aria-modal="true" aria-labelledby="pinTitle">
     <h3 id="pinTitle">Voer pincode in</h3>
