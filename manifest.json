@@ -1,0 +1,15 @@
+{
+  "name": "Kart Dashboard",
+  "short_name": "Karts",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#0f1115",
+  "theme_color": "#00c896",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/1048/1048313.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
