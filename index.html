@@ -103,7 +103,10 @@ button:hover{opacity:.9;}
   background: rgba(0,0,0,0.94);
   z-index: 99999;
   -webkit-tap-highlight-color: transparent;
+  /* fallback hard override to reduce chance of being hidden by other CSS:
+     this ensures the overlay is visible unless explicitly removed. */
 }
+#pinOverlay[hidden] { display:none !important; }
 
 #pinCard {
   background: #0b0c0d;
@@ -372,6 +375,7 @@ function unlock() {
   if (entered === CORRECT_PIN) {
     overlay.style.display = 'none';
     overlay.setAttribute('aria-hidden','true');
+    document.body.style.overflow = ''; // restore scrolling
     document.body.focus();
   } else {
     pinError.textContent = 'Onjuiste pincode';
@@ -425,6 +429,33 @@ window.addEventListener('keydown', (e)=>{
 
 // Init
 renderPin();
+</script>
+
+<!-- PIN debug: force show (temporary) -->
+<script>
+(function(){
+  window.addEventListener('load', () => {
+    console.log('[PIN debug] page loaded — checking overlay presence');
+    const o = document.getElementById('pinOverlay');
+    if (!o) {
+      console.error('[PIN debug] #pinOverlay not found — deployed index.html might differ');
+      return;
+    }
+    console.log('[PIN debug] overlay found — forcing visible and above all (temporary)');
+    // Force strong styles so overlay cannot be hidden by other CSS
+    o.style.setProperty('display','flex','important');
+    o.style.setProperty('position','fixed','important');
+    o.style.setProperty('inset','0','important');
+    o.style.setProperty('z-index','2147483647','important');
+    o.setAttribute('aria-hidden','false');
+    // Prevent scrolling while overlay active
+    document.body.style.overflow = 'hidden';
+    // log computed style
+    const cs = getComputedStyle(o);
+    console.log('[PIN debug] computed display:', cs.display, 'z-index:', cs.zIndex);
+    try{ console.log('[PIN debug] CORRECT_PIN =', typeof CORRECT_PIN !== 'undefined' ? CORRECT_PIN : 'not found'); }catch(e){}
+  });
+})();
 </script>
 
 </body>
