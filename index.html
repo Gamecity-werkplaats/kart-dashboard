@@ -1,11 +1,12 @@
 <!DOCTYPE html>
 <html lang="nl">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Kart Problemen Dashboard</title>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#00c896">
+
 <style>
 :root {
   --bg:#0f1115; --fg:#f0f0f0; --accent:#00c896;
@@ -89,9 +90,10 @@ button:hover{opacity:.9;}
 .solveBtn {background:var(--solved);margin-top:8px;}
 .solveBtn:disabled{background:#444;cursor:not-allowed;}
 </style>
+
+<!-- PIN overlay CSS -->
 <style>
-  /* PIN overlay (zelfstandig, raakt jouw layout niet) */
-  /* Donkere modal (Optie B) — verbeterde leesbaarheid & accessibility */
+/* Donkere modal (Optie B) — met aangepaste knoppen en leesbaarheid */
 #pinOverlay {
   position: fixed;
   inset: 0;
@@ -116,12 +118,7 @@ button:hover{opacity:.9;}
   font-family: inherit;
 }
 
-#pinTitle {
-  margin: 0 0 10px;
-  font-size: 18px;
-  font-weight: 600;
-  color: #ffffff;
-}
+#pinTitle { margin: 0 0 10px; font-size: 18px; font-weight: 600; color: #ffffff; }
 
 /* PIN display */
 #pinDisplay {
@@ -143,12 +140,7 @@ button:hover{opacity:.9;}
 }
 
 /* Numpad grid */
-.pinKeypad {
-  display:grid;
-  grid-template-columns: repeat(3,1fr);
-  gap:10px;
-  margin-top:6px;
-}
+.pinKeypad { display:grid; grid-template-columns: repeat(3,1fr); gap:10px; margin-top:6px; }
 
 /* Keys — GROTER en DIK gedrukt */
 .pinKey {
@@ -168,48 +160,26 @@ button:hover{opacity:.9;}
   transition: transform .06s ease, background .12s ease, box-shadow .06s ease;
   box-shadow: 0 1px 0 rgba(0,0,0,0.25) inset;
 }
-
-/* Active / pressed */
-.pinKey:active {
-  transform: translateY(1px);
-  filter:brightness(0.98);
-}
-
-/* Focus outline */
-.pinKey:focus {
-  outline: none;
-  box-shadow: 0 0 0 3px rgba(255,255,255,0.08), 0 6px 20px rgba(0,0,0,0.6);
-}
+.pinKey:active { transform: translateY(1px); filter:brightness(0.98); }
+.pinKey:focus { outline:none; box-shadow: 0 0 0 3px rgba(255,255,255,0.08), 0 6px 20px rgba(0,0,0,0.6); }
 
 /* Ontgrendel knop: gewenste kleur en extra vet */
 .pinKey.wide {
   grid-column: 1 / -1;
   background: #e10a8c;     /* EXACTe kleur zoals gevraagd */
   color: #fff;
-  font-weight:800;         /* echt dikgedrukt */
+  font-weight:800;
   font-size:18px;
   border: 1px solid rgba(0,0,0,0.35);
   min-height:62px;
   box-shadow: 0 6px 18px rgba(225,10,140,0.14);
 }
-
-/* Hover state voor ontgrendelen */
 .pinKey.wide:hover { filter: brightness(1.03); }
 
 /* Error tekst */
-#pinError {
-  color: #ffb3b3;
-  min-height:22px;
-  margin-top:12px;
-  font-size:13px;
-  line-height:1;
-}
+#pinError { color: #ffb3b3; min-height:22px; margin-top:12px; font-size:13px; line-height:1; }
 
-#pinCard .small-note {
-  margin-top:10px;
-  font-size:12px;
-  color: rgba(255,255,255,0.68);
-}
+#pinCard .small-note { margin-top:10px; font-size:12px; color: rgba(255,255,255,0.68); }
 
 /* Responsive */
 @media (max-width:420px){
@@ -228,9 +198,8 @@ button:hover{opacity:.9;}
 
 <main>
   <div id="syncStatus" style="text-align:center; margin-top:10px; color:#ccc;">
-  🏁 Bezig met laden…
+    🏁 Bezig met laden…
   </div>
-
 
   <div class="stats">
     <div class="stat"><h2 id="totalProblems">0</h2><p>Totaal meldingen</p></div>
@@ -274,7 +243,7 @@ const syncStatus=document.getElementById("syncStatus");
 async function load(){
   syncStatus.textContent="🔄 Data verversen...";
   try{
-    const r=await fetch(SHEET_URL+"?t="+Date.now()); // avoid caching
+    const r=await fetch(SHEET_URL+"?t="+Date.now());
     const d=await r.json();
     all=d.slice(1).map(r=>({datum:r[0],kart:r[1],probleem:r[2],melder:r[3],status:r[4]||"open"}));
     renderDashboard(); renderCards();
@@ -349,6 +318,8 @@ if('serviceWorker' in navigator){
 
 load();
 </script>
+
+<!-- PIN overlay HTML (staat na de hoofdscript zodat het DOM beschikbaar is) -->
 <div id="pinOverlay" aria-hidden="false">
   <div id="pinCard" role="dialog" aria-modal="true" aria-labelledby="pinTitle">
     <h3 id="pinTitle">Voer pincode in</h3>
@@ -370,89 +341,91 @@ load();
     </div>
 
     <div id="pinError" aria-live="polite"></div>
-    </div>
   </div>
 </div>
 
+<!-- PIN script -->
 <script>
-  // --- Simpele pincode overlay (client-side) ---
-  // Pas hier de pincode aan:
-  const CORRECT_PIN = '3120';
+/* Eenvoudige client-side pincode overlay.
+   Houd er rekening mee dat dit alleen client-side is (plaintext in code). */
+const CORRECT_PIN = '3120'; // pas aan indien gewenst
 
-  const overlay = document.getElementById('pinOverlay');
-  const pinDisplay = document.getElementById('pinDisplay');
-  const pinError = document.getElementById('pinError');
-  const keypad = document.getElementById('pinKeypad');
-  let entered = '';
+const overlay = document.getElementById('pinOverlay');
+const pinDisplay = document.getElementById('pinDisplay');
+const pinError = document.getElementById('pinError');
+const keypad = document.getElementById('pinKeypad');
+let entered = '';
 
-  function renderPin() {
-    const masked = entered.split('').map(()=> '•').join('');
-    pinDisplay.textContent = (masked + '----').slice(0,4);
-    pinError.textContent = '';
+// Render de maskering (•) van ingevoerde cijfers
+function renderPin() {
+  const masked = entered.split('').map(()=> '•').join('');
+  pinDisplay.textContent = (masked + '----').slice(0,4);
+  pinError.textContent = '';
+}
+
+// Controleer en ontgrendel
+function unlock() {
+  if (entered.length !== 4) {
+    pinError.textContent = 'Voer 4 cijfers in';
+    return;
   }
-
-  function unlock() {
-    if (entered.length !== 4) {
-      pinError.textContent = 'Voer 4 cijfers in';
-      return;
-    }
-    if (entered === CORRECT_PIN) {
-      overlay.style.display = 'none';
-      overlay.setAttribute('aria-hidden','true');
-      document.body.focus();
-    } else {
-      pinError.textContent = 'Onjuiste pincode';
-      setTimeout(()=> { entered=''; renderPin(); }, 600);
-    }
+  if (entered === CORRECT_PIN) {
+    overlay.style.display = 'none';
+    overlay.setAttribute('aria-hidden','true');
+    document.body.focus();
+  } else {
+    pinError.textContent = 'Onjuiste pincode';
+    setTimeout(()=> { entered=''; renderPin(); }, 600);
   }
+}
 
-  // Wanneer 4 cijfers zijn ingevoerd: probeer automatisch te ontgrendelen
-  function tryAutoUnlockWhenFull() {
-    if (entered.length === 4) {
-      // kleine delay zodat het laatste cijfer even zichtbaar blijft
-      setTimeout(unlock, 150);
-    }
+// Probeer automatisch wanneer 4 cijfers zijn ingevoerd
+function tryAutoUnlockWhenFull() {
+  if (entered.length === 4) {
+    // korte delay zodat het laatste cijfer zichtbaar is
+    setTimeout(unlock, 150);
   }
+}
 
-  keypad.addEventListener('click', (ev)=>{
-    const t = ev.target;
-    if (!t.classList.contains('pinKey')) return;
-    const v = t.textContent.trim();
-    if (v === '←') {
-      entered = entered.slice(0,-1);
+// Klik- en knopafhandeling
+keypad.addEventListener('click', (ev)=>{
+  const t = ev.target;
+  if (!t.classList.contains('pinKey')) return;
+  const v = t.textContent.trim();
+  if (v === '←') {
+    entered = entered.slice(0,-1);
+    renderPin();
+  } else if (v === 'Ontgrendel') {
+    unlock();
+  } else if (/^\d$/.test(v)) {
+    if (entered.length < 4) {
+      entered += v;
       renderPin();
-    } else if (v === 'Ontgrendel') {
-      unlock();
-    } else if (/^\d$/.test(v)) {
-      if (entered.length < 4) {
-        entered += v;
-        renderPin();
-        tryAutoUnlockWhenFull();
-      }
+      tryAutoUnlockWhenFull();
     }
-  });
+  }
+});
 
-  // keyboard support (en automatische poging bij 4 cijfers)
-  window.addEventListener('keydown', (e)=>{
-    if (overlay.style.display === 'none') return;
-    if (e.key >= '0' && e.key <= '9') {
-      if (entered.length < 4) {
-        entered += e.key;
-        renderPin();
-        tryAutoUnlockWhenFull();
-      }
-      e.preventDefault();
-    } else if (e.key === 'Backspace') {
-      entered = entered.slice(0,-1); renderPin(); e.preventDefault();
-    } else if (e.key === 'Enter') {
-      unlock(); e.preventDefault();
+// Keyboard support (0-9, Backspace, Enter). Als overlay verborgen is, negeer toetsen.
+window.addEventListener('keydown', (e)=>{
+  if (overlay.style.display === 'none') return;
+  if (e.key >= '0' && e.key <= '9') {
+    if (entered.length < 4) {
+      entered += e.key;
+      renderPin();
+      tryAutoUnlockWhenFull();
     }
-  });
+    e.preventDefault();
+  } else if (e.key === 'Backspace') {
+    entered = entered.slice(0,-1); renderPin(); e.preventDefault();
+  } else if (e.key === 'Enter') {
+    unlock(); e.preventDefault();
+  }
+});
 
-  // init
-  renderPin();
+// Init
+renderPin();
 </script>
+
 </body>
 </html>
-
-
