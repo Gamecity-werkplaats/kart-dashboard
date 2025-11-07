@@ -1,6 +1,7 @@
 // === CONFIG ===
 const SHEET_URL = "https://script.google.com/macros/s/AKfycbyV2YCK6qVc60A-ktS33beE5T7wupJXadiyn_hHPtsXIrP5tq5aIIjHCacLq_LE8yryig/exec";
 
+// Fill kart dropdowns
 for (let i = 1; i <= 40; i++) {
   document.querySelector("#kart").innerHTML += `<option>${i}</option>`;
   document.querySelector("#filterKart").innerHTML += `<option>${i}</option>`;
@@ -56,10 +57,10 @@ function render(list) {
   const open = list.filter(r => (r.status || "").toLowerCase() === "open");
   const resolved = list.filter(r => (r.status || "").toLowerCase() === "resolved");
 
-  // Open cards
+  // Render open cards
   open.forEach(r => cont.appendChild(createCard(r, false)));
 
-  // Resolved section
+  // Add toggle for resolved cards
   if (resolved.length) {
     const toggle = document.createElement("button");
     toggle.className = "resolved-toggle";
@@ -101,7 +102,7 @@ function createCard(r, isResolved = false) {
     </div>
   `;
 
-  // Solve action
+  // Solve button
   const btn = c.querySelector(".solveBtn");
   if (btn) {
     btn.onclick = async () => {
@@ -168,13 +169,25 @@ document.getElementById("addForm").onsubmit = async e => {
 };
 
 /* -----------------------
-   Filter
+   Filters
 ----------------------- */
 document.getElementById("filterKart").onchange = e => {
   const val = e.target.value;
   if (!val) render(all);
   else render(all.filter(r => r.kart == val));
 };
+
+document.getElementById("filterStatus").onchange = e => {
+  const val = e.target.value;
+  if (!val) render(all);
+  else render(all.filter(r => (r.status || "").toLowerCase() === val));
+};
+
+document.getElementById("clearFilters").addEventListener("click", () => {
+  document.getElementById("filterKart").value = "";
+  document.getElementById("filterStatus").value = "";
+  render(all);
+});
 
 /* -----------------------
    Dark/Light Mode Toggle
