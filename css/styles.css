@@ -277,6 +277,22 @@ body.light .card.kidKart {
 }
 .card.solving { animation:pulse 0.7s ease; }
 
+/* === Kart Type Text Colors (for titles only) === */
+.card-top h3.adultKart {
+  color: rgb(0, 55, 179);
+}
+body.light .card-top h3.adultKart {
+  color: rgb(0, 55, 179);
+}
+
+.card-top h3.kidKart {
+  color: rgb(253, 100, 0);
+}
+body.light .card-top h3.kidKart {
+  color: rgb(253, 100, 0);
+}
+
+
 /* Resolved toggle */
 .resolved-toggle {
   grid-column:1 / -1;
