@@ -328,3 +328,53 @@ body.light .card.resolved {
   line-height:1;
 }
 
+/* === Adult vs Kid kart stats color themes === */
+
+/* Base shared style */
+.stat {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+/* Adult (volwassen) color */
+.stat.adult h2 {
+  color: rgb(0, 55, 179);
+}
+.stat.adult.broken {
+  border: 2px solid rgba(231, 76, 60, 0.4);
+  box-shadow: 0 0 12px rgba(231, 76, 60, 0.3);
+  animation: fadeOutlineRed 2s ease infinite alternate;
+}
+.stat.adult.working {
+  border: 2px solid rgba(39, 174, 96, 0.4);
+  box-shadow: 0 0 12px rgba(39, 174, 96, 0.3);
+  animation: fadeOutlineGreen 2s ease infinite alternate;
+}
+
+/* Kid (kinder) color */
+.stat.kid h2 {
+  color: rgb(253, 100, 0);
+}
+.stat.kid.broken {
+  border: 2px solid rgba(231, 76, 60, 0.4);
+  box-shadow: 0 0 12px rgba(231, 76, 60, 0.3);
+  animation: fadeOutlineRed 2s ease infinite alternate;
+}
+.stat.kid.working {
+  border: 2px solid rgba(39, 174, 96, 0.4);
+  box-shadow: 0 0 12px rgba(39, 174, 96, 0.3);
+  animation: fadeOutlineGreen 2s ease infinite alternate;
+}
+
+/* Glow animations */
+@keyframes fadeOutlineRed {
+  from { box-shadow: 0 0 4px rgba(231, 76, 60, 0.4); }
+  to   { box-shadow: 0 0 18px rgba(231, 76, 60, 0.6); }
+}
+@keyframes fadeOutlineGreen {
+  from { box-shadow: 0 0 4px rgba(39, 174, 96, 0.4); }
+  to   { box-shadow: 0 0 18px rgba(39, 174, 96, 0.6); }
+}
+
+
