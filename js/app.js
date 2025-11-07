@@ -46,46 +46,56 @@ async function loadData() {
 // Render cards
 function render(list) {
   const cont = document.getElementById("cardsContainer");
-  if (!cont) return; // safety
+  if (!cont) return;
   cont.innerHTML = "";
 
-  list.filter(r => r.status === "open").forEach(r => {
+  list.forEach(r => {
     const c = document.createElement("div");
-    c.className = "card";
+    c.className = "card" + (r.status && r.status.toLowerCase() === "resolved" ? " resolved" : "");
     c.dataset.kart = r.kart;
+
     c.innerHTML = `
-      <div class="row1">
-        <div class="kart">🏎️ ${r.kart}</div>
+      <div class="card-header">
+        <div class="kart">🏎️ Kart ${r.kart}</div>
         <div class="time">${formatIsoToDDMMYYYY_HHMM(r.datum)}</div>
       </div>
-      <div class="row2">${r.probleem}</div>
-      <div class="row3">
-        <div class="melder">${r.melder || ""}</div>
-        <button class="resolveBtn">✅ Opgelost</button>
-      </div>`;
+      <div class="card-body">
+        <div class="probleem">${r.probleem || ""}</div>
+        <div class="melder">👤 ${r.melder || ""}</div>
+      </div>
+      <div class="card-footer">
+        ${r.status && r.status.toLowerCase() === "resolved"
+          ? `<span class="status-label">✅ Opgelost</span>`
+          : `<button class="resolveBtn">✅ Markeer als opgelost</button>`
+        }
+      </div>
+    `;
+
     cont.appendChild(c);
 
-    // Mark as resolved
-    c.querySelector(".resolveBtn").onclick = async () => {
-      const kart = r.kart;
+    // Handle "Opgelost"
+    const btn = c.querySelector(".resolveBtn");
+    if (btn) {
+      btn.onclick = async () => {
+        const kart = r.kart;
+        // Visual feedback
+        c.classList.add("resolved");
+        btn.disabled = true;
+        btn.textContent = "⏳ Wordt opgelost...";
 
-      // 🟢 Instant feedback
-      c.style.opacity = "0.5";
-      c.style.transition = "opacity 0.3s";
-      setTimeout(() => c.remove(), 300);
+        const form = new FormData();
+        form.append("action", "resolve");
+        form.append("kart", kart);
 
-      const form = new FormData();
-      form.append("action", "resolve");
-      form.append("kart", kart);
-
-      try {
-        await fetch(SHEET_URL, { method: "POST", body: form, mode: "no-cors" });
-      } catch (err) {
-        console.error(err);
-      } finally {
-        loadData();
-      }
-    };
+        try {
+          await fetch(SHEET_URL, { method: "POST", body: form, mode: "no-cors" });
+        } catch (err) {
+          console.error(err);
+        } finally {
+          loadData();
+        }
+      };
+    }
   });
 }
 
@@ -124,7 +134,7 @@ document.getElementById("addForm").onsubmit = async (e) => {
   }
 };
 
-// Filter
+// Filter (Kart only for now)
 document.getElementById("filterKart").onchange = (e) => {
   const val = e.target.value;
   if (!val) render(all);
