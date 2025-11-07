@@ -139,36 +139,57 @@ function createCard(r, isResolved = false) {
 ----------------------- */
 document.getElementById("addForm").onsubmit = async e => {
   e.preventDefault();
+
   const kart = document.getElementById("addKartDropdown").dataset.selected;
   const problem = document.getElementById("probleem").value;
   const name = document.getElementById("melder").value;
+  const file = document.getElementById("foto")?.files[0]; // 👈 your photo input
 
   if (!kart || !problem) return alert("Vul een kart en probleem in!");
 
   const addBtn = document.querySelector("#addBtn");
   addBtn.disabled = true;
-  addBtn.textContent = "✅ Toegevoegd!";
-  setTimeout(() => {
-    addBtn.disabled = false;
-    addBtn.textContent = "➕ Toevoegen";
-  }, 1500);
+  addBtn.textContent = "⏳ Uploaden...";
 
-  const form = new FormData();
-  form.append("action", "add");
-  form.append("kart", kart);
-  form.append("problem", problem);
-  form.append("name", name);
+  let fotoURL = "";
   try {
-    await fetch(SHEET_URL, { method: "POST", body: form, mode: "no-cors" });
+    // 1️⃣ Upload the image first if there is one
+    if (file) {
+      const formData = new FormData();
+      formData.append("file", file);
+      const uploadRes = await fetch(SHEET_URL, { method: "POST", body: formData });
+      const uploadJson = await uploadRes.json();
+      fotoURL = uploadJson.url || "";
+    }
+
+    // 2️⃣ Then add the problem record to the sheet
+    const form = new FormData();
+    form.append("action", "add");
+    form.append("kart", kart);
+    form.append("problem", problem);
+    form.append("name", name);
+    if (fotoURL) form.append("fotourl", fotoURL);
+
+    await fetch(SHEET_URL, { method: "POST", body: form });
+
+    addBtn.textContent = "✅ Toegevoegd!";
   } catch (err) {
-    console.error(err);
+    console.error("Upload or add failed", err);
+    alert("Er is iets misgegaan bij het uploaden 😬");
   } finally {
+    setTimeout(() => {
+      addBtn.disabled = false;
+      addBtn.textContent = "➕ Toevoegen";
+    }, 1500);
+
     document.getElementById("probleem").value = "";
     document.getElementById("melder").value = "";
+    document.getElementById("foto").value = "";
     document.querySelector("#addKartDropdown .filter-label").textContent = "Kies kart";
-    loadData();
+    loadData(); // refresh cards
   }
 };
+
 
 async function uploadImage(file) {
   if (!file) return "";
