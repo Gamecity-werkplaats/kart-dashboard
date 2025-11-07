@@ -1,3 +1,4 @@
+// === CONFIG ===
 const SHEET_URL = "https://script.google.com/macros/s/AKfycbyV2YCK6qVc60A-ktS33beE5T7wupJXadiyn_hHPtsXIrP5tq5aIIjHCacLq_LE8yryig/exec";
 
 for (let i = 1; i <= 40; i++) {
@@ -9,18 +10,27 @@ let all = [];
 let showResolved = false;
 const syncStatus = document.getElementById("syncStatus");
 
+/* -----------------------
+   Format ISO to DD-MM-YYYY HH:MM
+----------------------- */
 function formatIsoToDDMMYYYY_HHMM(iso) {
   if (!iso) return "";
   const date = new Date(iso);
   if (isNaN(date.getTime())) return iso;
-  const d = date.toLocaleString("nl-NL", {
-    day: "2-digit", month: "2-digit", year: "numeric",
-    hour: "2-digit", minute: "2-digit", hour12: false
-  });
-  return d.replace(",", "");
+  return date.toLocaleString("nl-NL", {
+    timeZone: "Europe/Amsterdam",
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false
+  }).replace(",", "");
 }
 
-// Load all data
+/* -----------------------
+   Load Data
+----------------------- */
 async function loadData() {
   try {
     syncStatus.textContent = "🔄 Data verversen...";
@@ -35,7 +45,9 @@ async function loadData() {
   }
 }
 
-// Render compact cards
+/* -----------------------
+   Render Cards
+----------------------- */
 function render(list) {
   const cont = document.getElementById("cardsContainer");
   if (!cont) return;
@@ -45,55 +57,66 @@ function render(list) {
   const resolved = list.filter(r => (r.status || "").toLowerCase() === "resolved");
 
   // Open cards
-  open.forEach(r => cont.appendChild(createCard(r)));
+  open.forEach(r => cont.appendChild(createCard(r, false)));
 
-  // Resolved toggle
+  // Resolved section
   if (resolved.length) {
     const toggle = document.createElement("button");
     toggle.className = "resolved-toggle";
-    toggle.textContent = showResolved ? "▲ Verberg opgeloste meldingen" : `▼ Toon opgeloste meldingen (${resolved.length})`;
+    toggle.textContent = showResolved
+      ? "▲ Verberg opgeloste meldingen"
+      : `▼ Toon opgeloste meldingen (${resolved.length})`;
     toggle.onclick = () => {
       showResolved = !showResolved;
       render(list);
     };
     cont.appendChild(toggle);
 
-    if (showResolved) {
-      resolved.forEach(r => cont.appendChild(createCard(r, true)));
-    }
+    if (showResolved) resolved.forEach(r => cont.appendChild(createCard(r, true)));
   }
 }
 
-// Create one compact card
+/* -----------------------
+   Create Card
+----------------------- */
 function createCard(r, isResolved = false) {
   const c = document.createElement("div");
-  c.className = "card" + (isResolved ? " resolved" : "");
+  c.className = `card ${isResolved ? "resolved" : "open"}`;
   c.dataset.kart = r.kart;
+  const date = formatIsoToDDMMYYYY_HHMM(r.datum);
 
   c.innerHTML = `
-    <div class="card-main">
-      <div class="kart-num">🏎️ ${r.kart}</div>
-      <div class="problem-text">${r.probleem || ""}</div>
+    <div class="card-top">
+      <h3>Kart: ${r.kart}</h3>
+      <div class="melder">${r.melder || "-"}</div>
     </div>
-    <div class="card-meta">
-      <span class="melder">👤 ${r.melder || ""}</span>
-      <span class="time">${formatIsoToDDMMYYYY_HHMM(r.datum)}</span>
-      ${isResolved
-        ? `<span class="status-label">✅ Opgelost</span>`
-        : `<button class="resolveBtn">✅ Opgelost</button>`}
+    <div class="card-body">${r.probleem || ""}</div>
+    <div class="card-bottom">
+      <div class="time">${date}</div>
+      ${
+        isResolved
+          ? `<span class="status">✅ Opgelost</span>`
+          : `<button class="solveBtn">✅ Opgelost</button>`
+      }
     </div>
   `;
 
-  // Opgelost action
-  const btn = c.querySelector(".resolveBtn");
+  // Solve action
+  const btn = c.querySelector(".solveBtn");
   if (btn) {
     btn.onclick = async () => {
       const kart = r.kart;
       btn.disabled = true;
       btn.textContent = "⏳...";
+
+      // Visual pulse animation
+      c.classList.add("solving");
+      setTimeout(() => c.classList.remove("solving"), 700);
+
       const form = new FormData();
       form.append("action", "resolve");
       form.append("kart", kart);
+
       try {
         await fetch(SHEET_URL, { method: "POST", body: form, mode: "no-cors" });
       } catch (err) {
@@ -107,8 +130,10 @@ function createCard(r, isResolved = false) {
   return c;
 }
 
-// Add new kart
-document.getElementById("addForm").onsubmit = async (e) => {
+/* -----------------------
+   Add New Problem
+----------------------- */
+document.getElementById("addForm").onsubmit = async e => {
   e.preventDefault();
   const kart = document.getElementById("kart").value;
   const problem = document.getElementById("probleem").value;
@@ -142,13 +167,26 @@ document.getElementById("addForm").onsubmit = async (e) => {
   }
 };
 
-// Filter by kart
-document.getElementById("filterKart").onchange = (e) => {
+/* -----------------------
+   Filter
+----------------------- */
+document.getElementById("filterKart").onchange = e => {
   const val = e.target.value;
   if (!val) render(all);
   else render(all.filter(r => r.kart == val));
 };
 
-// Initial load
+/* -----------------------
+   Dark/Light Mode Toggle
+----------------------- */
+const toggle = document.getElementById("modeToggle");
+toggle.addEventListener("click", () => {
+  document.body.classList.toggle("light");
+  toggle.textContent = document.body.classList.contains("light") ? "🌙" : "☀️";
+});
+
+/* -----------------------
+   Initial Load + Auto Refresh
+----------------------- */
 loadData();
 setInterval(loadData, 60000);
