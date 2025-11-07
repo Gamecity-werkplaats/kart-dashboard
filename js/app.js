@@ -1,13 +1,12 @@
 const SHEET_URL = "https://script.google.com/macros/s/AKfycbyV2YCK6qVc60A-ktS33beE5T7wupJXadiyn_hHPtsXIrP5tq5aIIjHCacLq_LE8yryig/exec";
 
-for(let i=1;i<=40;i++){
-  document.querySelector("#kart").innerHTML+=`<option>${i}</option>`;
-  document.querySelector("#filterKart").innerHTML+=`<option>${i}</option>`;
+for (let i = 1; i <= 40; i++) {
+  document.querySelector("#kart").innerHTML += `<option>${i}</option>`;
+  document.querySelector("#filterKart").innerHTML += `<option>${i}</option>`;
 }
 
-let all=[];
-let  // filled from server (used when no local order)
-const syncStatus=document.getElementById("syncStatus");
+let all = [];
+const syncStatus = document.getElementById("syncStatus");
 
 function formatIsoToDDMMYYYY_HHMM(iso) {
   if (!iso) return '';
@@ -25,16 +24,11 @@ function formatIsoToDDMMYYYY_HHMM(iso) {
 }
 
 function extractDateKey(iso) {
-  // returns DD-MM-YYYY or original iso if not parseable
   const pretty = formatIsoToDDMMYYYY_HHMM(iso);
   const m = pretty.match(/^(\d{2}-\d{2}-\d{4})/);
   return m ? m[1] : pretty;
 }
 
-/* Local ordering storage — keyed by groupKey */
-function storageKeyForGroup(groupKey){ return 'kart-order:' + (groupKey||'__all__'); }
-function  }
-function  }catch(e){return [];} }
 
 /* -----------------------
    Render + grouping
