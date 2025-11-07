@@ -148,34 +148,74 @@ async function load() {
 // Form submit
 document.getElementById("addForm").addEventListener("submit", async e => {
   e.preventDefault();
-  const body = {
-    action: "add",
-    datum: new Date().toISOString(),
-    kart: document.getElementById("kart").value,
-    probleem: document.getElementById("probleem").value,
-    melder: document.getElementById("melder").value,
-    status: "open"
-  };
-  await fetch(SHEET_URL, {
-    method: 'POST',
-    body: new URLSearchParams({ payload: JSON.stringify(body) })
-  });
-  e.target.reset();
-  load();
+  const btn = e.target.querySelector('button[type="submit"]');
+  const originalText = btn.textContent;
+  btn.disabled = true;
+  btn.innerHTML = `${originalText} <span class="spinner"></span>`;
+
+  try {
+    await fetch(SHEET_URL, {
+      method: 'POST',
+      body: new FormData(e.target)
+    });
+
+    // Succes feedback
+    btn.innerHTML = "✔ Toegevoegd";
+    btn.classList.add("btn-success");
+
+    setTimeout(() => {
+      btn.classList.remove("btn-success");
+      btn.textContent = originalText;
+      btn.disabled = false;
+    }, 1500);
+
+  } catch (err) {
+    console.error(err);
+    btn.textContent = "❌ Fout";
+    setTimeout(() => {
+      btn.textContent = originalText;
+      btn.disabled = false;
+    }, 2000);
+  }
 });
 
-// Delegated solve click
-document.addEventListener('click', async (ev) => {
-  const btn = ev.target.closest('.solveBtn');
-  if (!btn) return;
-  const kart = btn.dataset.kart;
-  const probleem = btn.dataset.probleem;
-  await fetch(SHEET_URL, {
-    method: 'POST',
-    body: new URLSearchParams({ payload: JSON.stringify({ action: 'solve', kart, probleem }) })
-  });
-  load();
+
+document.addEventListener("click", async e => {
+  if (e.target.classList.contains("solveBtn")) {
+    const btn = e.target;
+    const originalText = btn.textContent;
+    btn.disabled = true;
+    btn.innerHTML = `${originalText} <span class="spinner"></span>`;
+
+    try {
+      await fetch(SHEET_URL + "?action=solve", {
+        method: "POST",
+        body: JSON.stringify({
+          kart: btn.dataset.kart,
+          probleem: btn.dataset.probleem
+        })
+      });
+
+      btn.innerHTML = "✔ Opgelost";
+      btn.classList.add("btn-success");
+
+      setTimeout(() => {
+        btn.classList.remove("btn-success");
+        btn.textContent = originalText;
+        btn.disabled = false;
+      }, 1500);
+
+    } catch (err) {
+      console.error(err);
+      btn.textContent = "❌ Fout";
+      setTimeout(() => {
+        btn.textContent = originalText;
+        btn.disabled = false;
+      }, 2000);
+    }
+  }
 });
+
 
 // Filters
 document.getElementById("filterKart").addEventListener("change", renderCards);

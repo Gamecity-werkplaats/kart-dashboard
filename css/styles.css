@@ -113,3 +113,27 @@ button:hover{opacity:.95;}
 #pinError { color: #ffb3b3; min-height:22px; margin-top:12px; font-size:13px; line-height:1; }
 #pinCard .small-note { margin-top:10px; font-size:12px; color: rgba(255,255,255,0.68); }
 @media (max-width:420px){ #pinCard { width: 92%; padding:16px; } #pinDisplay { font-size:22px; height:50px; letter-spacing:10px; max-width:280px; } .pinKey { font-size:19px; padding:12px; min-height:52px; } .pinKey.wide { min-height:54px; font-size:17px; } }
+
+/* Spinner animatie */
+.spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid currentColor;
+  border-top-color: transparent;
+  border-radius: 50%;
+  margin-left: 6px;
+  vertical-align: middle;
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Succes status */
+.btn-success {
+  color: #0a0;
+  font-weight: bold;
+  transition: color 0.3s ease;
+}
