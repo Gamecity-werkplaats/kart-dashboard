@@ -187,14 +187,20 @@ document.addEventListener("click", async e => {
     btn.disabled = true;
     btn.innerHTML = `${originalText} <span class="spinner"></span>`;
 
+    const payload = {
+      action: "solve",
+      kart: btn.dataset.kart,
+      probleem: btn.dataset.probleem
+    };
+
     try {
-      await fetch(SHEET_URL + "?action=solve", {
+      const res = await fetch(SHEET_URL, {
         method: "POST",
-        body: JSON.stringify({
-          kart: btn.dataset.kart,
-          probleem: btn.dataset.probleem
-        })
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
       });
+
+      if (!res.ok) throw new Error("Server error");
 
       btn.innerHTML = "✔ Opgelost";
       btn.classList.add("btn-success");
@@ -215,7 +221,6 @@ document.addEventListener("click", async e => {
     }
   }
 });
-
 
 // Filters
 document.getElementById("filterKart").addEventListener("change", renderCards);
