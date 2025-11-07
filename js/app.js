@@ -1,19 +1,13 @@
-// === CONFIG ===
 const SHEET_URL = "https://script.google.com/macros/s/AKfycbyV2YCK6qVc60A-ktS33beE5T7wupJXadiyn_hHPtsXIrP5tq5aIIjHCacLq_LE8yryig/exec";
 
-// Fill kart dropdowns
 for (let i = 1; i <= 40; i++) {
   document.querySelector("#kart").innerHTML += `<option>${i}</option>`;
-  document.querySelector("#filterKart").innerHTML += `<option>${i}</option>`;
 }
 
 let all = [];
 let showResolved = false;
 const syncStatus = document.getElementById("syncStatus");
 
-/* -----------------------
-   Format ISO to DD-MM-YYYY HH:MM
------------------------ */
 function formatIsoToDDMMYYYY_HHMM(iso) {
   if (!iso) return "";
   const date = new Date(iso);
@@ -29,9 +23,6 @@ function formatIsoToDDMMYYYY_HHMM(iso) {
   }).replace(",", "");
 }
 
-/* -----------------------
-   Load Data
------------------------ */
 async function loadData() {
   try {
     syncStatus.textContent = "🔄 Data verversen...";
@@ -46,9 +37,6 @@ async function loadData() {
   }
 }
 
-/* -----------------------
-   Render Cards
------------------------ */
 function render(list) {
   const cont = document.getElementById("cardsContainer");
   if (!cont) return;
@@ -57,10 +45,8 @@ function render(list) {
   const open = list.filter(r => (r.status || "").toLowerCase() === "open");
   const resolved = list.filter(r => (r.status || "").toLowerCase() === "resolved");
 
-  // Render open cards
   open.forEach(r => cont.appendChild(createCard(r, false)));
 
-  // Add toggle for resolved cards
   if (resolved.length) {
     const toggle = document.createElement("button");
     toggle.className = "resolved-toggle";
@@ -72,18 +58,13 @@ function render(list) {
       render(list);
     };
     cont.appendChild(toggle);
-
     if (showResolved) resolved.forEach(r => cont.appendChild(createCard(r, true)));
   }
 }
 
-/* -----------------------
-   Create Card
------------------------ */
 function createCard(r, isResolved = false) {
   const c = document.createElement("div");
   c.className = `card ${isResolved ? "resolved" : "open"}`;
-  c.dataset.kart = r.kart;
   const date = formatIsoToDDMMYYYY_HHMM(r.datum);
 
   c.innerHTML = `
@@ -102,22 +83,17 @@ function createCard(r, isResolved = false) {
     </div>
   `;
 
-  // Solve button
   const btn = c.querySelector(".solveBtn");
   if (btn) {
     btn.onclick = async () => {
-      const kart = r.kart;
       btn.disabled = true;
       btn.textContent = "⏳...";
-
-      // Visual pulse animation
       c.classList.add("solving");
       setTimeout(() => c.classList.remove("solving"), 700);
 
       const form = new FormData();
       form.append("action", "resolve");
-      form.append("kart", kart);
-
+      form.append("kart", r.kart);
       try {
         await fetch(SHEET_URL, { method: "POST", body: form, mode: "no-cors" });
       } catch (err) {
@@ -127,13 +103,9 @@ function createCard(r, isResolved = false) {
       }
     };
   }
-
   return c;
 }
 
-/* -----------------------
-   Add New Problem
------------------------ */
 document.getElementById("addForm").onsubmit = async e => {
   e.preventDefault();
   const kart = document.getElementById("kart").value;
@@ -142,21 +114,18 @@ document.getElementById("addForm").onsubmit = async e => {
   if (!kart || !problem) return alert("Vul een kart en probleem in!");
 
   const addBtn = document.querySelector("#addBtn");
-  if (addBtn) {
-    addBtn.disabled = true;
-    addBtn.textContent = "✅ Toegevoegd!";
-    setTimeout(() => {
-      addBtn.disabled = false;
-      addBtn.textContent = "➕ Toevoegen";
-    }, 1500);
-  }
+  addBtn.disabled = true;
+  addBtn.textContent = "✅ Toegevoegd!";
+  setTimeout(() => {
+    addBtn.disabled = false;
+    addBtn.textContent = "➕ Toevoegen";
+  }, 1500);
 
   const form = new FormData();
   form.append("action", "add");
   form.append("kart", kart);
   form.append("problem", problem);
   form.append("name", name);
-
   try {
     await fetch(SHEET_URL, { method: "POST", body: form, mode: "no-cors" });
   } catch (err) {
@@ -168,38 +137,50 @@ document.getElementById("addForm").onsubmit = async e => {
   }
 };
 
-/* -----------------------
-   Filters
------------------------ */
-document.getElementById("filterKart").onchange = e => {
-  const val = e.target.value;
-  if (!val) render(all);
-  else render(all.filter(r => r.kart == val));
-};
-
-document.getElementById("filterStatus").onchange = e => {
-  const val = e.target.value;
-  if (!val) render(all);
-  else render(all.filter(r => (r.status || "").toLowerCase() === val));
-};
-
-document.getElementById("clearFilters").addEventListener("click", () => {
-  document.getElementById("filterKart").value = "";
-  document.getElementById("filterStatus").value = "";
-  render(all);
-});
-
-/* -----------------------
-   Dark/Light Mode Toggle
------------------------ */
 const toggle = document.getElementById("modeToggle");
 toggle.addEventListener("click", () => {
   document.body.classList.toggle("light");
   toggle.textContent = document.body.classList.contains("light") ? "🌙" : "☀️";
 });
 
-/* -----------------------
-   Initial Load + Auto Refresh
------------------------ */
 loadData();
 setInterval(loadData, 60000);
+
+/* --- Custom dropdowns --- */
+const kartContainer = document.getElementById("kartOptions");
+for (let i = 1; i <= 40; i++) {
+  const opt = document.createElement("div");
+  opt.textContent = `Kart ${i}`;
+  opt.dataset.value = i;
+  kartContainer.appendChild(opt);
+}
+
+const kartFilter = document.getElementById("kartFilter");
+const statusFilter = document.getElementById("statusFilter");
+const kartLabel = kartFilter.querySelector(".filter-label");
+const statusLabel = statusFilter.querySelector(".filter-label");
+
+document.querySelectorAll(".filter-options div").forEach(opt => {
+  opt.addEventListener("click", e => {
+    const parent = e.target.closest(".filter-dropdown");
+    const value = e.target.dataset.value;
+    const label = parent.querySelector(".filter-label");
+    label.textContent = e.target.textContent;
+    parent.removeAttribute("open");
+
+    const kartVal = kartLabel.textContent.replace("Kart ", "");
+    const statusVal = statusLabel.textContent.toLowerCase();
+    render(
+      all.filter(r =>
+        (!kartVal || kartVal === "Alle" || r.kart == kartVal) &&
+        (!statusVal || statusVal === "alle" || (r.status || "").toLowerCase() === statusVal)
+      )
+    );
+  });
+});
+
+document.getElementById("clearFilters").addEventListener("click", () => {
+  kartLabel.textContent = "Alle";
+  statusLabel.textContent = "Alle";
+  render(all);
+});
