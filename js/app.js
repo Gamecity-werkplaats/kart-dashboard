@@ -145,21 +145,34 @@ async function load() {
   document.head.appendChild(script);
 }
 
-// Form submit
 document.getElementById("addForm").addEventListener("submit", async e => {
   e.preventDefault();
+
   const btn = e.target.querySelector('button[type="submit"]');
   const originalText = btn.textContent;
   btn.disabled = true;
   btn.innerHTML = `${originalText} <span class="spinner"></span>`;
 
+  // Verzamel form-gegevens in JSON
+  const formData = new FormData(e.target);
+  const payload = {
+    action: "add",
+    datum: formData.get("datum"),
+    kart: formData.get("kart"),
+    probleem: formData.get("probleem"),
+    melder: formData.get("melder"),
+    status: "open"
+  };
+
   try {
-    await fetch(SHEET_URL, {
-      method: 'POST',
-      body: new FormData(e.target)
+    const res = await fetch(SHEET_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
     });
 
-    // Succes feedback
+    if (!res.ok) throw new Error("Server error");
+
     btn.innerHTML = "✔ Toegevoegd";
     btn.classList.add("btn-success");
 
@@ -168,6 +181,9 @@ document.getElementById("addForm").addEventListener("submit", async e => {
       btn.textContent = originalText;
       btn.disabled = false;
     }, 1500);
+
+    // Optioneel: herlaad direct nieuwe data
+    load();
 
   } catch (err) {
     console.error(err);
@@ -178,6 +194,7 @@ document.getElementById("addForm").addEventListener("submit", async e => {
     }, 2000);
   }
 });
+
 
 
 document.addEventListener("click", async e => {
