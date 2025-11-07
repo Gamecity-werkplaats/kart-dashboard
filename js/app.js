@@ -291,3 +291,19 @@ document.querySelectorAll("#addKartOptions div").forEach(opt => {
 ----------------------- */
 loadData();
 setInterval(loadData, 60000);
+
+/* -----------------------
+   Close dropdowns when clicking outside
+----------------------- */
+document.addEventListener("click", e => {
+  // Get all open <details> dropdowns
+  const allDropdowns = document.querySelectorAll("details[open]");
+
+  allDropdowns.forEach(drop => {
+    // If the click is NOT inside the dropdown or its summary, close it
+    if (!drop.contains(e.target)) {
+      drop.removeAttribute("open");
+    }
+  });
+});
+
