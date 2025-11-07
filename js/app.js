@@ -1,6 +1,6 @@
 const SHEET_URL = "https://script.google.com/macros/s/AKfycbyV2YCK6qVc60A-ktS33beE5T7wupJXadiyn_hHPtsXIrP5tq5aIIjHCacLq_LE8yryig/exec";
 
-for (let i = 1; i <= 40; i++) {
+for (let i = 1; i <= 43; i++) {
   document.querySelector("#kart").innerHTML += `<option>${i}</option>`;
 }
 
