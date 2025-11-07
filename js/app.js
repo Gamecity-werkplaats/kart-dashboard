@@ -130,30 +130,6 @@ function createCard(r, isResolved = false) {
 }
 
 
-  // Solve button
-  const btn = c.querySelector(".solveBtn");
-  if (btn) {
-    btn.onclick = async () => {
-      btn.disabled = true;
-      btn.textContent = "⏳...";
-      c.classList.add("solving");
-      setTimeout(() => c.classList.remove("solving"), 700);
-
-      const form = new FormData();
-      form.append("action", "resolve");
-      form.append("kart", r.kart);
-      try {
-        await fetch(SHEET_URL, { method: "POST", body: form, mode: "no-cors" });
-      } catch (err) {
-        console.error(err);
-      } finally {
-        loadData();
-      }
-    };
-  }
-  return c;
-}
-
 /* -----------------------
    Add New Problem
 ----------------------- */
