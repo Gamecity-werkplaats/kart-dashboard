@@ -143,7 +143,7 @@ document.getElementById("addForm").onsubmit = async e => {
   const kart = document.getElementById("addKartDropdown").dataset.selected;
   const problem = document.getElementById("probleem").value;
   const name = document.getElementById("melder").value;
-  const file = document.getElementById("foto")?.files[0]; // 👈 your photo input
+  const file = document.getElementById("foto")?.files[0];
 
   if (!kart || !problem) return alert("Vul een kart en probleem in!");
 
@@ -152,17 +152,20 @@ document.getElementById("addForm").onsubmit = async e => {
   addBtn.textContent = "⏳ Uploaden...";
 
   let fotoURL = "";
+
   try {
-    // 1️⃣ Upload the image first if there is one
+    // Upload photo first (if one is selected)
     if (file) {
-      const formData = new FormData();
-      formData.append("file", file);
-      const uploadRes = await fetch(SHEET_URL, { method: "POST", body: formData });
+      const uploadForm = new FormData();
+      uploadForm.append("file", file);
+
+      const uploadRes = await fetch(SHEET_URL, { method: "POST", body: uploadForm });
       const uploadJson = await uploadRes.json();
       fotoURL = uploadJson.url || "";
+      console.log("Foto upload response:", uploadJson);
     }
 
-    // 2️⃣ Then add the problem record to the sheet
+    // Now add the issue to the Sheet
     const form = new FormData();
     form.append("action", "add");
     form.append("kart", kart);
@@ -170,12 +173,14 @@ document.getElementById("addForm").onsubmit = async e => {
     form.append("name", name);
     if (fotoURL) form.append("fotourl", fotoURL);
 
-    await fetch(SHEET_URL, { method: "POST", body: form });
+    const res = await fetch(SHEET_URL, { method: "POST", body: form });
+    const text = await res.text();
+    console.log("Sheet response:", text);
 
     addBtn.textContent = "✅ Toegevoegd!";
   } catch (err) {
-    console.error("Upload or add failed", err);
-    alert("Er is iets misgegaan bij het uploaden 😬");
+    console.error("Fout bij toevoegen:", err);
+    alert("Er ging iets mis bij het toevoegen!");
   } finally {
     setTimeout(() => {
       addBtn.disabled = false;
@@ -184,11 +189,12 @@ document.getElementById("addForm").onsubmit = async e => {
 
     document.getElementById("probleem").value = "";
     document.getElementById("melder").value = "";
-    document.getElementById("foto").value = "";
+    if (document.getElementById("foto")) document.getElementById("foto").value = "";
     document.querySelector("#addKartDropdown .filter-label").textContent = "Kies kart";
-    loadData(); // refresh cards
+    loadData();
   }
 };
+
 
 
 async function uploadImage(file) {
