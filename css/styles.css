@@ -358,17 +358,6 @@ body.light .stat.kid {
   background: rgba(253, 100, 0, 0.07);
 }
 
-/* Broken outline + subtle red glow */
-.stat.broken {
-  border: 1px solid rgba(231, 76, 60, 0.35);
-  box-shadow: 0 0 8px rgba(231, 76, 60, 0.25);
-}
-
-/* Working outline + subtle green glow */
-.stat.working {
-  border: 1px solid rgba(39, 174, 96, 0.35);
-  box-shadow: 0 0 8px rgba(39, 174, 96, 0.25);
-}
 
 /* Text contrast adjustments */
 .stat.adult h2 {
