@@ -1,5 +1,5 @@
 // simple update-friendly service worker
-const VERSION = 'v20251107-1';
+const VERSION = 'v20251107';
 const CACHE_NAME = 'app-cache-' + VERSION;
 const ASSETS_TO_CACHE = [
   // add any static assets you want to cache, or leave empty to rely on runtime fetches
@@ -49,4 +49,5 @@ self.addEventListener('fetch', (ev) => {
     }).catch(() => caches.match(ev.request))
   );
 });
+
 
