@@ -328,6 +328,67 @@ body.light .card.resolved {
   line-height:1;
 }
 
+/* === Adult vs Kid kart stat background themes === */
+.stat {
+  position: relative;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 3px 10px var(--shadow);
+  transition: all 0.3s ease;
+}
+
+/* Base titles readable */
+.stat h2, .stat p {
+  transition: color 0.3s ease;
+}
+
+/* Volwassenkarts base tint */
+.stat.adult {
+  background: rgba(0, 55, 179, 0.08); /* soft blue tint */
+}
+body.light .stat.adult {
+  background: rgba(0, 55, 179, 0.07);
+}
+
+/* Kinderkarts base tint */
+.stat.kid {
+  background: rgba(253, 100, 0, 0.08); /* soft orange tint */
+}
+body.light .stat.kid {
+  background: rgba(253, 100, 0, 0.07);
+}
+
+/* Broken outline + subtle red glow */
+.stat.broken {
+  border: 1px solid rgba(231, 76, 60, 0.35);
+  box-shadow: 0 0 8px rgba(231, 76, 60, 0.25);
+}
+
+/* Working outline + subtle green glow */
+.stat.working {
+  border: 1px solid rgba(39, 174, 96, 0.35);
+  box-shadow: 0 0 8px rgba(39, 174, 96, 0.25);
+}
+
+/* Text contrast adjustments */
+.stat.adult h2 {
+  color: rgb(0, 55, 179);
+}
+.stat.kid h2 {
+  color: rgb(253, 100, 0);
+}
+.stat.broken h2 {
+  color: var(--open);
+}
+.stat.working h2 {
+  color: var(--solved);
+}
+
+/* Optional hover boost */
+.stat:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+}
 
 
 
