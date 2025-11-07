@@ -44,7 +44,7 @@ async function loadData() {
 
 // Render cards
 function render(list) {
-  const cont = document.getElementById("cards");
+  const cont = document.getElementById("cardsContainer");
   cont.innerHTML = "";
 
   list.filter(r => r.status === "open").forEach(r => {
