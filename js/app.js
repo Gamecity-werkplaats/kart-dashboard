@@ -166,10 +166,15 @@ function updateStats(list) {
   const workingAdultsEl = document.getElementById("workingAdults");
   const workingKidsEl = document.getElementById("workingKids");
 
+  const adultBrokenBox = document.getElementById("adultBrokenBox");
+  const kidBrokenBox = document.getElementById("kidBrokenBox");
+  const adultWorkingBox = document.getElementById("adultWorkingBox");
+  const kidWorkingBox = document.getElementById("kidWorkingBox");
+
   if (!brokenAdultsEl) return;
 
   const adultRange = { start: 1, end: 30 };
-  const kidRange = { start: 31, end: 42 };
+  const kidRange = { start: 31, end: 43 };
 
   const brokenAdults = list.filter(r =>
     (r.status || "").toLowerCase() === "open" &&
@@ -189,11 +194,26 @@ function updateStats(list) {
   const workingAdults = totalAdults - brokenAdults;
   const workingKids = totalKids - brokenKids;
 
+  // Update text
   brokenAdultsEl.textContent = brokenAdults;
   brokenKidsEl.textContent = brokenKids;
   workingAdultsEl.textContent = workingAdults;
   workingKidsEl.textContent = workingKids;
+
+  // Toggle color classes dynamically
+  adultBrokenBox.classList.toggle("broken", brokenAdults > 0);
+  adultBrokenBox.classList.toggle("working", brokenAdults === 0);
+
+  kidBrokenBox.classList.toggle("broken", brokenKids > 0);
+  kidBrokenBox.classList.toggle("working", brokenKids === 0);
+
+  adultWorkingBox.classList.toggle("working", workingAdults > 0);
+  adultWorkingBox.classList.toggle("broken", workingAdults === 0);
+
+  kidWorkingBox.classList.toggle("working", workingKids > 0);
+  kidWorkingBox.classList.toggle("broken", workingKids === 0);
 }
+
 
 /* -----------------------
    Dark / Light Mode Toggle
