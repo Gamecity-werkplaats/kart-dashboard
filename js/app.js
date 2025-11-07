@@ -83,15 +83,16 @@ function createCard(r, isResolved = false) {
   const c = document.createElement("div");
   const kartNum = Number(r.kart);
 
-  // Determine kart type
-  const kartType = kartNum >= 1 && kartNum <= 30 ? "adultKart" : "kidKart";
-  c.className = `card ${kartType} ${isResolved ? "resolved" : "open"}`;
+  // Determine kart type (for styling text)
+  const isAdult = kartNum >= 1 && kartNum <= 30;
+  const kartTypeClass = isAdult ? "adultKart" : "kidKart";
+  c.className = `card ${isResolved ? "resolved" : "open"}`;
 
   const date = formatIsoToDDMMYYYY_HHMM(r.datum);
 
   c.innerHTML = `
     <div class="card-top">
-      <h3>Kart: ${r.kart}</h3>
+      <h3 class="${kartTypeClass}">Kart: ${r.kart}</h3>
       <div class="melder">${r.melder || "-"}</div>
     </div>
     <div class="card-body">${r.probleem || ""}</div>
@@ -105,7 +106,7 @@ function createCard(r, isResolved = false) {
     </div>
   `;
 
-  // Solve button
+  // Solve button behavior
   const btn = c.querySelector(".solveBtn");
   if (btn) {
     btn.onclick = async () => {
@@ -129,6 +130,7 @@ function createCard(r, isResolved = false) {
 
   return c;
 }
+
 
 /* -----------------------
    Add New Problem
