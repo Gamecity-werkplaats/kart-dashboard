@@ -2,7 +2,7 @@
 const SHEET_URL = "https://script.google.com/macros/s/AKfycbyV2YCK6qVc60A-ktS33beE5T7wupJXadiyn_hHPtsXIrP5tq5aIIjHCacLq_LE8yryig/exec";
 
 // Fill kart dropdown for Add Form
-for (let i = 1; i <= 40; i++) {
+for (let i = 1; i <= 42; i++) {
   document.querySelector("#kart").innerHTML += `<option>${i}</option>`;
 }
 
@@ -169,7 +169,7 @@ function updateStats(list) {
   if (!brokenAdultsEl) return;
 
   const adultRange = { start: 1, end: 30 };
-  const kidRange = { start: 31, end: 43 };
+  const kidRange = { start: 31, end: 42 };
 
   const brokenAdults = list.filter(r =>
     (r.status || "").toLowerCase() === "open" &&
@@ -208,7 +208,7 @@ toggle.addEventListener("click", () => {
    Custom Dropdown Filters
 ----------------------- */
 const kartContainer = document.getElementById("kartOptions");
-for (let i = 1; i <= 40; i++) {
+for (let i = 1; i <= 42; i++) {
   const opt = document.createElement("div");
   opt.textContent = `Kart ${i}`;
   opt.dataset.value = i;
